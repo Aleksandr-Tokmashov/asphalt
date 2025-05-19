@@ -1,0 +1,33 @@
+.stepsChecklistContainer {
+  padding: 24px;
+}
+
+.stepsChecklistTitle {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.stepsChecklistSubtitle {
+  color: #8c8c8c;
+}
+
+.stepsChecklistDivider {
+  margin: 12px 0;
+}
+
+.stepsChecklistCard {
+  margin-bottom: 24px;
+}
+
+.stepsChecklistCardHeader {
+  background-color: #f0f2f5;
+  font-weight: bold;
+}
+
+.stepsChecklistCheckboxItem {
+  margin: 12px 0;
+}
+
+.stepsChecklistCheckedItem {
+  text-decoration: line-through;
+}
