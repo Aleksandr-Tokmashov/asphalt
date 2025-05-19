@@ -2,7 +2,7 @@ import "./App.css";
 import { Divider, Steps } from "antd";
 import { useState } from "react";
 import WorkStepsChecklist from '../WorkStepsChecklist/WorkStepsChecklist';
-import MapComponent from "../MapComponent/MapCOmponent";
+import MapComponent from "../MapComponent/MapComponent";
 
 const steps = [
   {
@@ -30,8 +30,7 @@ function App() {
     console.log("onChange:", value);
     setCurrent(value);
   };
-   const description = "This is a description.";
-
+  
   return (
     <div className="app">
       <Steps
