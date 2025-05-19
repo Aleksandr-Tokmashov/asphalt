@@ -10,12 +10,11 @@ createRoot(document.getElementById("root")!).render(
       theme={{
         components: {
           Steps: {
-            iconSize: 60,
-            iconFontSize: 30,
+   
           },
         },
         token: {
-          fontSize: 20
+  
         }
       }}
     >

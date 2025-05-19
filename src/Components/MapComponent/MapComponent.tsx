@@ -1,49 +1,59 @@
-import React, { useState } from 'react';
-import { MapContainer, TileLayer, Marker, Polygon, Popup, useMapEvents } from 'react-leaflet';
+import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Polygon, Popup, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import './MapComponent.css';
-import { Button, List, Card, Typography } from 'antd';
+import { Button, List, Card, Typography, message } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
 
-// Иконка для маркера
-const markerIcon = new L.Icon({
+// Fix for default marker icons
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-const MOSCOW_CENTER: [number, number] = [55.751244, 37.618423];
+// Координаты Тверской улицы в Москве
+const TVERSKAYA_STREET: [number, number] = [55.860181, 37.602169];
 
 type Point = [number, number];
+
+const MapClickHandler: React.FC<{ addPoint: (point: Point) => void }> = ({ addPoint }) => {
+  const map = useMap();
+
+  useMapEvents({
+    click: (e) => {
+      // Проверяем, доступен ли такой zoom уровень
+      if (map.getZoom() > map.getMaxZoom()) {
+        message.warning('Достигнут максимальный уровень масштабирования');
+        return;
+      }
+      addPoint([e.latlng.lat, e.latlng.lng]);
+    },
+    zoomend: () => {
+      // Проверяем доступность тайлов при изменении зума
+      if (map.getZoom() > map.getMaxZoom()) {
+        map.setZoom(map.getMaxZoom());
+      }
+    }
+  });
+  return null;
+};
 
 const MapComponent: React.FC = () => {
   const [points, setPoints] = useState<Point[]>([]);
   const [polygon, setPolygon] = useState<Point[]>([]);
+  const [mapReady, setMapReady] = useState(false);
 
-  // Добавление точки при клике на карту
-  const MapClickHandler = () => {
-    useMapEvents({
-      click: (e) => {
-        const { lat, lng } = e.latlng;
-        const newPoint: Point = [lat, lng];
-        setPoints(prev => [...prev, newPoint]);
-
-        // Если точек больше 2, строим полигон
-        if (points.length >= 2) {
-          const convexHull = computeConvexHull([...points, newPoint]);
-          setPolygon(convexHull);
-        }
-      },
-    });
-    return null;
+  // Добавление точки
+  const addPoint = (newPoint: Point) => {
+    setPoints(prev => [...prev, newPoint]);
   };
 
   // Функция для вычисления выпуклой оболочки
   const computeConvexHull = (points: Point[]): Point[] => {
     if (points.length < 3) return points;
 
-    // Сортируем точки по координате X
     points.sort((a, b) => a[0] - b[0]);
 
     const lowerHull: Point[] = [];
@@ -62,35 +72,39 @@ const MapComponent: React.FC = () => {
       upperHull.push(points[i]);
     }
 
-    // Удаляем последние элементы, так как они дублируются
     lowerHull.pop();
     upperHull.pop();
 
     return [...lowerHull, ...upperHull];
   };
 
-  // Вспомогательная функция для вычисления векторного произведения
   const crossProduct = (a: Point, b: Point, c: Point): number => {
     return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
   };
 
-  // Удаление точки
   const removePoint = (index: number) => {
     const newPoints = points.filter((_, i) => i !== index);
     setPoints(newPoints);
     if (newPoints.length >= 3) {
-      const convexHull = computeConvexHull(newPoints);
-      setPolygon(convexHull);
+      setPolygon(computeConvexHull(newPoints));
     } else {
       setPolygon([]);
     }
   };
 
-  // Очистка всех точек
   const clearAll = () => {
     setPoints([]);
     setPolygon([]);
   };
+
+  // Обновляем полигон при изменении точек
+  useEffect(() => {
+    if (points.length >= 3) {
+      setPolygon(computeConvexHull(points));
+    } else {
+      setPolygon([]);
+    }
+  }, [points]);
 
   return (
     <div style={{ display: 'flex', height: '80vh' }}>
@@ -101,6 +115,7 @@ const MapComponent: React.FC = () => {
           type="primary"
           danger
           style={{ marginBottom: '20px' }}
+          disabled={points.length === 0}
         >
           Очистить все точки
         </Button>
@@ -110,14 +125,18 @@ const MapComponent: React.FC = () => {
           dataSource={points}
           renderItem={(point, index) => (
             <List.Item>
-              <Card style={{ width: '100%' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Точка {index + 1}: {point[0].toFixed(4)}, {point[1].toFixed(4)}</span>
+              <Card size="small" style={{ width: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Точка {index + 1}:<br />{point[0].toFixed(6)}, {point[1].toFixed(6)}</span>
                   <Button
                     type="text"
                     danger
                     icon={<CloseOutlined />}
-                    onClick={() => removePoint(index)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removePoint(index);
+                    }}
+                    size="small"
                   />
                 </div>
               </Card>
@@ -129,28 +148,33 @@ const MapComponent: React.FC = () => {
           <Card style={{ marginTop: '20px', backgroundColor: '#e0f7fa' }}>
             <Typography.Text strong>Полигон построен!</Typography.Text>
             <p>Количество точек: {points.length}</p>
+            <p>Площадь: {calculatePolygonArea(polygon).toFixed(2)} м²</p>
           </Card>
         )}
       </div>
 
       <div style={{ flex: 1 }}>
         <MapContainer
-          center={MOSCOW_CENTER}
-          zoom={15}
+          center={TVERSKAYA_STREET}
+          zoom={19}
+          minZoom={3}
+          maxZoom={20}
           style={{ height: '100%', width: '100%' }}
+          whenReady={() => setMapReady(true)}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            maxZoom={20}
+            maxNativeZoom={19}
           />
 
-          <MapClickHandler />
+          {mapReady && <MapClickHandler addPoint={addPoint} />}
 
           {points.map((point, index) => (
             <Marker
-              key={index}
+              key={`marker-${index}`}
               position={point}
-              icon={markerIcon}
               eventHandlers={{
                 click: () => removePoint(index),
               }}
@@ -158,7 +182,17 @@ const MapComponent: React.FC = () => {
               <Popup>
                 Точка {index + 1}<br />
                 {point[0].toFixed(6)}, {point[1].toFixed(6)}<br />
-                <Button type="primary" danger onClick={() => removePoint(index)}>Удалить</Button>
+                <Button 
+                  type="primary" 
+                  danger 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removePoint(index);
+                  }}
+                  size="small"
+                >
+                  Удалить
+                </Button>
               </Popup>
             </Marker>
           ))}
@@ -174,5 +208,28 @@ const MapComponent: React.FC = () => {
     </div>
   );
 };
+
+// Функция для расчета площади полигона (в квадратных метрах)
+function calculatePolygonArea(points: Point[]): number {
+  if (points.length < 3) return 0;
+  
+  let area = 0;
+  const radius = 6371000; // Радиус Земли в метрах
+  
+  for (let i = 0; i < points.length; i++) {
+    const j = (i + 1) % points.length;
+    const [lat1, lng1] = points[i];
+    const [lat2, lng2] = points[j];
+    
+    const x1 = lng1 * Math.PI / 180 * radius * Math.cos(lat1 * Math.PI / 180);
+    const y1 = lat1 * Math.PI / 180 * radius;
+    const x2 = lng2 * Math.PI / 180 * radius * Math.cos(lat2 * Math.PI / 180);
+    const y2 = lat2 * Math.PI / 180 * radius;
+    
+    area += x1 * y2 - x2 * y1;
+  }
+  
+  return Math.abs(area / 2);
+}
 
 export default MapComponent;
