@@ -3,6 +3,8 @@ import { Divider, Steps } from "antd";
 import { useState } from "react";
 import WorkStepsChecklist from '../WorkStepsChecklist/WorkStepsChecklist';
 import MapComponent from "../MapComponent/MapComponent";
+import AsphaltCalculator from "../AsphaltCalculator/AsphaltCalculator";
+import "./App.css"
 
 const steps = [
   {
@@ -15,11 +17,11 @@ const steps = [
   },
   {
     title: "Third",
-    content: "Second-content",
+    content: <AsphaltCalculator />
   },
   {
     title: "Last",
-    content: <WorkStepsChecklist />,
+    content: ""
   },
 ];
 
@@ -30,7 +32,7 @@ function App() {
     console.log("onChange:", value);
     setCurrent(value);
   };
-  
+
   return (
     <div className="app">
       <Steps

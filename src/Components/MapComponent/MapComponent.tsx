@@ -4,6 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button, List, Card, Typography, message } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
+import "./MapComponent.css"
 
 // Fix for default marker icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
