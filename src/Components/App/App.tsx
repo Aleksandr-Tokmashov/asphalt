@@ -3,8 +3,10 @@ import { Divider, Steps } from "antd";
 import { useState } from "react";
 import WorkStepsChecklist from '../WorkStepsChecklist/WorkStepsChecklist';
 import MapComponent from "../MapComponent/MapComponent";
-import AsphaltCalculator from "../AsphaltCalculator/AsphaltCalculator";
 import "./App.css"
+import AsphaltLayingSimulator from "../Road/Road";
+import AsphaltLayingForm from "../AsphaltCalculator/AsphaltCalculator";
+import Dashboard from "../Dashboard/Dashboard";
 
 const steps = [
   {
@@ -17,11 +19,15 @@ const steps = [
   },
   {
     title: "Third",
-    content: <AsphaltCalculator />
+    content: <AsphaltLayingSimulator />
+  },
+  {
+    title: "Fourth",
+    content: <AsphaltLayingForm />
   },
   {
     title: "Last",
-    content: ""
+    content: <Dashboard />
   },
 ];
 
@@ -42,19 +48,25 @@ function App() {
         items={[
           {
             title: "Этап 1",
-            description: "Выбор дороги"
+            description:"Выбор дороги"
+          
           },
           {
             title: "Этап 2",
-            description: "Организация выполнения работ"
+            description:"Чек-лист организации выполнения работ"
+      
           },
           {
             title: "Этап 3",
-            description: "Выполнение работ"
+            description:"Выбор дороги"
           },
           {
             title: "Этап 4",
-            description: "Контроль качества работ"
+            description:"Журнал укладки асфальта"
+          },
+          {
+            title: "Этап 5",
+            description:"Контроль качества работ"
           },
         ]}
       />
